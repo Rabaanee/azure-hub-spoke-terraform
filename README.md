@@ -158,10 +158,7 @@ module "db_subnet" {
 #### 📊 Resources Created in Azure
 
 <img width="500"  alt="spoke subnets created" src="https://github.com/user-attachments/assets/84cbf0a0-971c-4326-b523-fd9bdb864566" />
-<img width="500"  alt="hub subnets created" src="https://github.com/user-attachments/assets/5fc98211-795e-446a-bc5a-35146f73f9e5" />
-
-
-
+<img width="500"  alt="hub subnets created" src="https://github.com/user-attachments/assets/4d7f9db7-8997-4436-8058-0f0cbd2c7d3f" />
 
 **Why it matters:**  
 Subnet segmentation enables granular security control through NSGs and route tables. The three-tier architecture (Web/App/DB) in the spoke follows enterprise best practices for application isolation. The Bastion subnet requires a minimum `/26` address space and must be named `AzureBastionSubnet`.
@@ -335,39 +332,206 @@ The Web subnet has no route table, allowing direct internet access for public-fa
 ### Phase 6: VNet Peering
 
 **What I built:**
-- Bidirectional peering between Hub and Spoke VNets
-- Enabled traffic flow for secure communication
+- Created a reusable VNet Peering Terraform module
+- Established bidirectional peering between Hub and Spoke VNets
+- Enabled traffic flow and forwarded traffic between networks
+- Configured peering to allow virtual network access
+
+---
+
+#### 📂 VNet Peering Module Files
+
+| modules/vnet-peering/main.tf | modules/vnet-peering/variables.tf | modules/vnet-peering/outputs.tf |
+|:---:|:---:|:---:|
+| <img src="https://github.com/user-attachments/assets/91087d1e-e4b7-42cd-8a88-6e08ff23eb35" width="280" alt="peering main.tf" /> | <img src="https://github.com/user-attachments/assets/c9617d1a-839d-4ceb-8945-10293983f4c4" width="280" alt="peering variables.tf" /> | <img src="https://github.com/user-attachments/assets/30662a19-53a8-44c1-812b-6ffc81c5320a" width="280" alt="peering outputs.tf" /> |
+
+---
+
+#### 🔧 Using the Module in main.tf
+
+**After creating the peering module, I added this to my root main.tf:**
+```hcl
+# Create peering from Hub to Spoke
+module "hub_to_spoke" {
+  source         = "./modules/vnet-peering"
+  name           = "hub-to-spoke-peering"
+  resource_group = var.hub_rg
+  vnet_name      = module.hub_vnet.name
+  remote_vnet_id = module.spoke_vnet.id
+}
+
+# Create peering from Spoke to Hub
+module "spoke_to_hub" {
+  source         = "./modules/vnet-peering"
+  name           = "spoke-to-hub-peering"
+  resource_group = var.spoke_rg
+  vnet_name      = module.spoke_vnet.name
+  remote_vnet_id = module.hub_vnet.id
+}
+```
+
+---
+
+#### 📊 Resources Created in Azure
+
+<img width="1835" height="354" alt="vnet-spoke peering complete" src="https://github.com/user-attachments/assets/f32849ca-fe7b-4d4a-8446-2b738690b849" />
+<img width="1858" height="357" alt="peering vnet-hub " src="https://github.com/user-attachments/assets/2f051ebc-dd13-491d-93f3-3bedd7f06388" />
 
 **Why it matters:**  
-VNet peering provides private, low-latency connectivity without using the internet or VPN.
+VNet peering enables private, low-latency connectivity between virtual networks without routing traffic over the public internet or through a VPN gateway. Peering must be configured **bidirectionally**—each VNet needs its own peering connection to the other. This establishes the foundation of the hub-and-spoke architecture, allowing the hub to centralize shared services while spokes remain isolated from each other.
 
-![VNet Peering](screenshots/phase6-vnet-peering.png)
+**Key configuration:**  
+- `allow_forwarded_traffic = true` enables spoke-to-spoke communication through the hub
+- `allow_virtual_network_access = true` permits resources in peered VNets to communicate
+- Gateway transit settings are disabled as no VPN gateway is currently deployed
 
 ---
 
 ### Phase 7: Azure Bastion
 
 **What I built:**
-- Azure Bastion in Hub VNet for secure RDP/SSH access
-- Standard Public IP for Bastion
-- Shared Services subnet for future management tools
+- Deployed Azure Bastion in Hub VNet for secure RDP/SSH access
+- Created Standard Public IP (51.105.27.114) for Bastion connectivity
+- Configured Bastion to use the AzureBastionSubnet (10.0.1.0/27)
+- Established infrastructure for secure VM administration without public IPs
+
+---
+
+#### 🔧 Implementation in main.tf
+
+**After creating all modules and infrastructure, I added Bastion to my root main.tf:**
+```hcl
+# Public IP for Bastion
+resource "azurerm_public_ip" "bastion" {
+  name                = "bastion-pip"
+  location            = var.location
+  resource_group_name = var.hub_rg
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+# Azure Bastion Host
+resource "azurerm_bastion_host" "this" {
+  name                = "hub-bastion"
+  location            = var.location
+  resource_group_name = var.hub_rg
+  
+  ip_configuration {
+    name                 = "bastion-ipconfig"
+    subnet_id            = module.hub_bastion_subnet.id
+    public_ip_address_id = azurerm_public_ip.bastion.id
+  }
+}
+```
+
+---
+
+#### 📊 Resources Created in Azure
+
+
+<img width="1418" height="43" alt="bastion ip" src="https://github.com/user-attachments/assets/8d6309ea-347c-40c2-9cdc-30b11ee453f4" />
+
+
+<img width="1918" height="911" alt="bastion created" src="https://github.com/user-attachments/assets/f8f3e290-a534-49d9-a6c8-cf0276851a79" />
+
+
+<img width="1921" height="920" alt="bastion in vnet-hub" src="https://github.com/user-attachments/assets/2b198fff-30e6-4da2-a604-32ccc8e74836" />
 
 **Why it matters:**  
-Bastion eliminates the need for public IPs on VMs, reducing attack surface while enabling secure remote access.
+Azure Bastion provides secure RDP/SSH connectivity to virtual machines without exposing them to the public internet. All connections are made over SSL (port 443) through the Azure Portal, eliminating the need for public IPs on VMs and significantly reducing the attack surface.
 
-**Important:** Bastion must be in the same region as the VMs it accesses.
+**Key benefits:**
+- Centralized access point for all VMs in hub and spoke networks
+- No need to manage jump boxes or VPN connections
+- Encrypted connections over SSL
+- Integration with Azure AD for authentication
 
-| Bastion Configuration | Public IP | Bastion Host |
-|:---:|:---:|:---:|
-| ![Bastion Subnet](screenshots/phase7-bastion-subnet.png) | ![Public IP](screenshots/phase8-bastion-pip.png) | ![Bastion Host](screenshots/phase9-bastion-host.png) |
+**Important limitation:**  
+Azure Bastion must be deployed in the **same region** as the VMs it will access. Cross-region Bastion connectivity is not supported.
+
+**Project note:**  
+Due to regional subscription quota limitations, I was unable to deploy test VMs in the same region as Bastion for connectivity validation. However, the Bastion infrastructure is fully deployed and functional. In a production environment, this would provide centralized secure access to all VMs across the hub and spoke networks.
 
 ---
 
 ### Phase 8: Infrastructure Verification
 
-**Azure Resource Visualizer:**
+**What I accomplished:**
+- Successfully deployed complete hub-and-spoke network architecture using Terraform
+- Verified all resources across Hub and Spoke resource groups
+- Confirmed infrastructure state with `terraform show`
+- Validated network topology with Azure Resource Visualizer
 
-![Subscription Overview](screenshots/subscription-visualizer.png)
+---
+
+#### 📊 Azure Resource Visualizer - Complete Infrastructure
+
+**Visual representation of deployed resources:**
+
+<img width="900" alt="Azure Resource Visualizer" src="https://github.com/user-attachments/assets/279f4b92-6915-4ac0-aa5d-0f1165dd5b23" />
+
+*The diagram shows the relationship between all components: VNets, Bastion, NSGs, Route Table, and their interconnections through peering.*
+
+---
+
+#### 📊 Hub Resource Group (rg-hub-network)
+
+<img width="900" alt="Hub Resource Group" src="https://github.com/user-attachments/assets/bd0eba4e-16b6-490f-a61d-eff93305d691" />
+
+**Hub Resources:**
+- ✅ vnet-hub (10.0.0.0/16)
+- ✅ bastion-pip (Public IP: 51.105.27.114)
+- ✅ hub-bastion (Azure Bastion)
+
+---
+
+#### 📊 Spoke Resource Group (rg-spoke-prod-network)
+
+<img width="900" alt="Spoke Resource Group" src="https://github.com/user-attachments/assets/f4885511-4086-49fd-b01f-6a4ac6c154e7" />
+
+**Spoke Resources:**
+- ✅ vnet-spoke-prod (10.1.0.0/16)
+- ✅ nsg-web, nsg-app, nsg-db (Network Security Groups)
+- ✅ rt-spoke-app-db (Route Table)
+
+---
+
+#### 🎯 Deployment Summary
+
+**Infrastructure Components:**
+
+| Category | Resource | Status |
+|:---|:---|:---:|
+| **Virtual Networks** | vnet-hub (10.0.0.0/16) | ✅ |
+| | vnet-spoke-prod (10.1.0.0/16) | ✅ |
+| **Subnets** | AzureBastionSubnet (10.0.1.0/27) | ✅ |
+| | SharedServicesSubnet (10.0.2.0/24) | ✅ |
+| | WebSubnet (10.1.1.0/24) | ✅ |
+| | AppSubnet (10.1.2.0/24) | ✅ |
+| | DBSubnet (10.1.3.0/24) | ✅ |
+| **Security** | nsg-web, nsg-app, nsg-db | ✅ |
+| | NSG Associations (3) | ✅ |
+| **Routing** | rt-spoke-app-db | ✅ |
+| | Route Table Associations (2) | ✅ |
+| **Connectivity** | hub-to-spoke-peering | ✅ |
+| | spoke-to-hub-peering | ✅ |
+| **Bastion** | hub-bastion | ✅ |
+| | bastion-pip (51.105.27.114) | ✅ |
+
+---
+
+#### ✅ Architecture Validation
+
+**Verified Configurations:**
+- Hub VNet successfully peers with Spoke VNet (bidirectional) ✅
+- All subnets deployed with correct address spaces ✅
+- NSGs associated with Web, App, and DB subnets ✅
+- Route table applied to App and DB subnets for controlled traffic flow ✅
+- Bastion deployed in Hub VNet with Standard Public IP ✅
+- All resources deployed in correct resource groups (hub vs spoke) ✅
+- Terraform state reflects all deployed infrastructure ✅
+
+**Infrastructure managed entirely through Terraform with modular, reusable code.**
 
 ---
 

@@ -1,5 +1,63 @@
-# Azure Enterprise Hub-and-Spoke Network
-This project demonstrates the deployment of an **enterprise-style hub-and-spoke network** in Azure using Terraform. It showcases foundational cloud networking skills including VNet design, peering, security groups, and infrastructure as code.
+# Azure Enterprise Hub-and-Spoke Network with Terraform
+
+![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)
+![Azure](https://img.shields.io/badge/Microsoft_Azure-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+**AZ-104 Certified** • **Terraform Associate (In Progress)** • **Cloud Portfolio Project**
+
+
+## 🚀 Introduction
+
+This project demonstrates my implementation of a production-ready **enterprise hub-and-spoke network architecture** on Microsoft Azure using Infrastructure as Code (Terraform). 
+
+As part of my cloud engineering journey—having recently passed the **AZ-104 Azure Administrator certification** and currently preparing for the **HashiCorp Terraform Associate**—this project represents my hands-on application of core cloud networking concepts in a real-world scenario.
+
+## 📋 Project Overview
+
+**Objective:** Deploy a secure, scalable hub-and-spoke network topology following Azure best practices for enterprise environments.
+
+**Key Features:**
+- ✅ **Modular Terraform Design** – Reusable modules for VNets, subnets, NSGs, and peering
+- ✅ **Security-First Architecture** – Network Security Groups for each application tier
+- ✅ **Centralized Management** – Hub VNet with Azure Bastion for secure access
+- ✅ **Proper Segmentation** – Three-tier application isolation (Web/App/DB)
+- ✅ **Traffic Control** – Route tables for controlled egress traffic flow
+
+## 🛠️ **Skills Demonstrated**
+
+| **Azure Services** | **Terraform Concepts** | **Networking Principles** |
+|:-------------------|:------------------------|:--------------------------|
+| • Virtual Networks & Subnets | • Modular Code Structure | • Hub-and-Spoke Topology |
+| • Network Security Groups | • Remote State Management | • CIDR Planning & IP Addressing |
+| • VNet Peering | • Provider Configuration | • Subnet Segmentation |
+| • Azure Bastion | • Variable Definitions | • Traffic Routing (UDRs) |
+| • Route Tables | • Output Values | • Security Zones |
+
+## 📋 Prerequisites
+
+Before deploying this infrastructure, ensure you have:
+
+- **Azure Account** with active subscription (free tier works)
+- **Azure CLI** installed and configured (`az login`)
+- **Terraform** v1.0+ installed locally
+- Proper **permissions** to create resources in your Azure subscription
+- **Git** for cloning the repository
+
+## 🚀 Quick Start (Deploy in 10 Minutes)
+
+| **Step** | **Command** | **Description** |
+|:---|:---|:---|
+| **1. Clone** | `git clone https://github.com/Rabaanee/azure-hub-spoke-terraform.git`<br>`cd azure-hub-spoke-terraform` | Get the code locally |
+| **2. Authenticate** | `az login` | Connect to your Azure account |
+| **3. Initialize** | `terraform init` | Set up Terraform backend & providers |
+| **4. Plan** | `terraform plan` | Review what will be created |
+| **5. Deploy** | `terraform apply -auto-approve` | Create all Azure resources |
+| **6. Cleanup** | `terraform destroy -auto-approve` | Remove resources to avoid charges |
+
+**Deployment Time:** ~15 minutes  
+**Estimated Cost:** ~£110/month (mainly Azure Bastion)  
+**Resources Created:** 15+ Azure resources across 2 resource groups
 ## 🏗️ Architecture Overview
 
 The network implements:
@@ -535,6 +593,28 @@ Due to regional subscription quota limitations, I was unable to deploy test VMs 
 
 ---
 
+## 📊 Project Metrics & Cost Analysis
+
+| **Metric** | **Value** | **Insight** |
+|-----------|----------|-------------|
+| **Terraform Modules** | 6 | Modular, reusable design |
+| **Azure Resources** | 15+ | Production-scale deployment |
+| **Deployment Time** | 15 min | Efficient infrastructure provisioning |
+| **Monthly Cost** | ~£110 | Bastion is primary cost driver |
+| **Lines of Code** | ~300 | Clean, maintainable IaC |
+| **Security Zones** | 5 | Web/App/DB/Bastion/Shared |
+
+## 🎯 What This Project Demonstrates to Employers:
+
+1. **Technical Proficiency:** AZ-104 concepts applied in real infrastructure
+2. **Infrastructure as Code:** Production-ready Terraform with modules
+3. **Cloud Architecture:** Enterprise hub-and-spoke pattern implementation
+4. **Security Awareness:** NSGs, segmentation, secure access (Bastion)
+5. **Cost Consciousness:** Clear cleanup instructions to prevent waste
+6. **Documentation Skills:** Comprehensive, recruiter-friendly README
+
+---
+
 ## 🎯 Key Takeaways
 
 - **Modular Terraform** makes infrastructure reusable and maintainable
@@ -553,19 +633,13 @@ Due to regional subscription quota limitations, I was unable to deploy test VMs 
 - Deploy test VMs to validate connectivity
 - Add CI/CD pipeline for Terraform deployment
 - Implement least-privilege NSG rules (restrict App/DB access to specific subnets)
-- Deploy Azure Firewall in the hub for centralized traffic inspection
-- Add Azure VPN Gateway for hybrid connectivity
+
 
 ---
+## 📫 Connect With Me
 
-## 🛠️ Technologies Used
+- **LinkedIn:** www.linkedin.com/in/Rabaanee-Ahmed
+- **GitHub:** https://github.com/Rabaanee
 
-- **Azure:** VNets, Subnets, NSGs, Route Tables, VNet Peering, Azure Bastion
-- **Terraform:** Infrastructure as Code, Modules, Remote State
-- **Networking:** Hub-and-Spoke Topology, Security Groups, Routing
+*Open to cloud engineering roles and eager to contribute to infrastructure teams.*
 
----
-
-## 📝 Notes
-
-This is my first cloud infrastructure project. Bastion and VM connectivity testing were not fully demonstrated due to regional constraints, but all infrastructure is deployed and functional.

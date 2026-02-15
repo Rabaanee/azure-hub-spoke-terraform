@@ -14,39 +14,39 @@ module "spoke_vnet" {
   resource_group = var.spoke_rg
 }
 module "hub_bastion_subnet" {
-  source          = "./modules/subnet"
-  name            = "AzureBastionSubnet"
-  address_prefix  = "10.0.1.0/27"
-  resource_group  = var.hub_rg
-  vnet_name       = module.hub_vnet.name
+  source         = "./modules/subnet"
+  name           = "AzureBastionSubnet"
+  address_prefix = "10.0.1.0/27"
+  resource_group = var.hub_rg
+  vnet_name      = module.hub_vnet.name
 }
 module "shared_services_subnet" {
-  source          = "./modules/subnet"
-  name            = "SharedServicesSubnett"
-  address_prefix  = "10.0.2.0/24"
-  resource_group  = var.hub_rg
-  vnet_name       = module.hub_vnet.name
+  source         = "./modules/subnet"
+  name           = "SharedServicesSubnett"
+  address_prefix = "10.0.2.0/24"
+  resource_group = var.hub_rg
+  vnet_name      = module.hub_vnet.name
 }
 module "spoke_web_subnet" {
-  source          = "./modules/subnet"
-  name            = "WebSubnet"
-  address_prefix  = "10.1.1.0/24"
-  resource_group  = var.spoke_rg
-  vnet_name       = module.spoke_vnet.name
+  source         = "./modules/subnet"
+  name           = "WebSubnet"
+  address_prefix = "10.1.1.0/24"
+  resource_group = var.spoke_rg
+  vnet_name      = module.spoke_vnet.name
 }
 module "app_subnet" {
-  source          = "./modules/subnet"
-  name            = "AppSubnet"
-  address_prefix  = "10.1.2.0/24"
-  resource_group  = var.spoke_rg
-  vnet_name       = module.spoke_vnet.name
+  source         = "./modules/subnet"
+  name           = "AppSubnet"
+  address_prefix = "10.1.2.0/24"
+  resource_group = var.spoke_rg
+  vnet_name      = module.spoke_vnet.name
 }
 module "db_subnet" {
-  source          = "./modules/subnet"
-  name            = "DBSubnet"
-  address_prefix  = "10.1.3.0/24"
-  resource_group  = var.spoke_rg
-  vnet_name       = module.spoke_vnet.name
+  source         = "./modules/subnet"
+  name           = "DBSubnet"
+  address_prefix = "10.1.3.0/24"
+  resource_group = var.spoke_rg
+  vnet_name      = module.spoke_vnet.name
 }
 module "web_nsg" {
   source         = "./modules/nsg"
